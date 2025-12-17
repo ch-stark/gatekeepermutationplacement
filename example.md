@@ -1,5 +1,3 @@
-Here is the complete, copy-paste ready solution in Markdown.
-
 1. The External Data Provider (Python Service)
 Save this as server.py. This script acts as the webhook that receives the scores list, modifies the free-capacity value, and returns the result to Gatekeeper.
 

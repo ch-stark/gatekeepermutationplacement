@@ -1,5 +1,9 @@
 # Gatekeeper Mutation with External Data for OCM
 
+This is just brainstorming and not tested at all!!!
+
+Goal is to modify a Placement using Gatekeeper-Mutation, at the end the python script should query metrics from the RHACM-Hub Cluster.
+
 ### 1. Python Provider Script (`server.py`)
 Run this service where Gatekeeper can reach it (e.g., containerize it and run as a Service).
 
@@ -133,5 +137,4 @@ status:
   validUntil: "2024-12-31T10:00:00Z"
 ```
 
-**Next Step:**
-Would you like me to explain how to generate the `caBundle` for the Provider YAML?
+

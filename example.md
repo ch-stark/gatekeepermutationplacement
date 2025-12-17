@@ -1,10 +1,9 @@
-### Gatekeeper Mutation with External Data for OCM
+# Gatekeeper Mutation with External Data for OCM
 
-1. Python Provider Script (server.py)
+### 1. Python Provider Script (`server.py`)
 Run this service where Gatekeeper can reach it (e.g., containerize it and run as a Service).
 
-Python
-
+```python
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -58,11 +57,14 @@ def update_gpu_score():
 if __name__ == '__main__':
     # SSL is required by Gatekeeper. Use 'adhoc' for local dev only.
     app.run(host='0.0.0.0', port=8443, ssl_context='adhoc')
-2. Gatekeeper Configuration (gatekeeper-config.yaml)
+```
+
+---
+
+### 2. Gatekeeper Configuration (`gatekeeper-config.yaml`)
 Apply this to the cluster.
 
-YAML
-
+```yaml
 # ---------------------------------------------------------
 # 1. Register the Python Service as a Provider
 # ---------------------------------------------------------
@@ -72,7 +74,7 @@ metadata:
   name: gpu-score-provider
 spec:
   # Replace with the actual DNS name/IP of your python service
-  url: https://gpu-service.default.svc:8443/update-gpu-score
+  url: [https://gpu-service.default.svc:8443/update-gpu-score](https://gpu-service.default.svc:8443/update-gpu-score)
   
   timeout: 3
   
@@ -109,11 +111,14 @@ spec:
   match:
     scope: Namespaced
     namespaces: ["cluster1"]
-3. Test Object (test-score.yaml)
+```
+
+---
+
+### 3. Test Object (`test-score.yaml`)
 Apply this to verify the mutation works.
 
-YAML
-
+```yaml
 apiVersion: cluster.open-cluster-management.io/v1alpha1
 kind: AddOnPlacementScore
 metadata:
@@ -126,4 +131,7 @@ status:
     - name: free-capacity
       value: 8
   validUntil: "2024-12-31T10:00:00Z"
-Next Step: Would you like me to explain how to generate the caBundle for the Provider YAML?
+```
+
+**Next Step:**
+Would you like me to explain how to generate the `caBundle` for the Provider YAML?

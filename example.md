@@ -1,5 +1,6 @@
-1. The External Data Provider (Python Service)
-Save this as server.py. This script acts as the webhook that receives the scores list, modifies the free-capacity value, and returns the result to Gatekeeper.
+Gatekeeper Mutation with External Data for OCM
+1. Python Provider Script (server.py)
+Run this service where Gatekeeper can reach it (e.g., containerize it and run as a Service).
 
 Python
 
@@ -13,9 +14,9 @@ def update_gpu_score():
     request_data = request.json
     results = []
 
-    # Gatekeeper sends a list of 'keys'. 
-    # Because we use 'ValueAtLocation' on 'status.scores', the key IS the list of scores.
-    # We iterate over every object being validated in this batch.
+    # Gatekeeper sends a list of 'keys'.
+    # Because 'dataSource: ValueAtLocation' is set on 'status.scores', 
+    # the key IS the list of score objects.
     for scores_list in request_data.get("request", {}).get("keys", []):
         
         # Handle cases where the list is None (newly created object)
@@ -54,32 +55,34 @@ def update_gpu_score():
     })
 
 if __name__ == '__main__':
-    # Run efficiently on all interfaces. 
-    # Note: Gatekeeper requires HTTPS. For local tests use 'adhoc' or a real cert.
+    # SSL is required by Gatekeeper. Use 'adhoc' for local dev only.
     app.run(host='0.0.0.0', port=8443, ssl_context='adhoc')
-2. Kubernetes Configuration (Provider & Policy)
-Save this as gatekeeper-config.yaml. This registers your Python service and defines the mutation policy.
-
-Note: You must replace <BASE64_CA_BUNDLE> with your actual CA bundle. If you are just testing locally with ssl_context='adhoc', you can try setting caBundle: "Cg==" (empty newline) but you may need to configure Gatekeeper to ignore TLS errors or use a proper self-signed cert.
+2. Gatekeeper Configuration (gatekeeper-config.yaml)
+Apply this to the cluster.
 
 YAML
 
----
+# ---------------------------------------------------------
 # 1. Register the Python Service as a Provider
+# ---------------------------------------------------------
 apiVersion: externaldata.gatekeeper.sh/v1beta1
 kind: Provider
 metadata:
   name: gpu-score-provider
 spec:
-  # Replace with the actual DNS name of your python service
+  # Replace with the actual DNS name/IP of your python service
   url: https://gpu-service.default.svc:8443/update-gpu-score
+  
   timeout: 3
+  
   # CA Bundle is mandatory. Use `base64 encoded` certificate.
-  # For quick testing, you can generate a cert and bundle it here.
+  # For quick testing, you can use a generated cert bundle here.
   caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0t..." 
 
 ---
+# ---------------------------------------------------------
 # 2. Define the Mutation Policy
+# ---------------------------------------------------------
 apiVersion: mutations.gatekeeper.sh/v1beta1
 kind: Assign
 metadata:
@@ -105,8 +108,8 @@ spec:
   match:
     scope: Namespaced
     namespaces: ["cluster1"]
-3. The Test Object
-Save this as test-score.yaml. Apply this to verify the mutation works.
+3. Test Object (test-score.yaml)
+Apply this to verify the mutation works.
 
 YAML
 
@@ -118,31 +121,8 @@ metadata:
 status:
   scores:
     # We provide a dummy value of 8.
-    # After applying, if you 'kubectl get', this should become 88.
+    # After applying, if you run 'kubectl get', this should become 88.
     - name: free-capacity
       value: 8
   validUntil: "2024-12-31T10:00:00Z"
-4. How to Run
-Start the Python Server:
-
-Bash
-
-python3 server.py
-(Ensure this is reachable by Gatekeeper inside the cluster via the URL defined in the Provider YAML).
-
-Apply Gatekeeper Config:
-
-Bash
-
-kubectl apply -f gatekeeper-config.yaml
-Apply Test Object:
-
-Bash
-
-kubectl apply -f test-score.yaml
-Verify Mutation:
-
-Bash
-
-kubectl get addonplacementscore gpu-usage-score -n cluster1 -o yaml
-You should see value: 88 in the output.
+Next Step: Would you like me to explain how to generate the caBundle for the Provider YAML?
